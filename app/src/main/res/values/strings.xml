@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MotelFinderApp</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <array name="LoaiBai">
+
+        <item>Cho thuê</item>
+        <item>Tìm người ở ghép</item>
+    </array>
+</resources>
