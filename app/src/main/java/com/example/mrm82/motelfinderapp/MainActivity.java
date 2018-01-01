@@ -12,12 +12,14 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -34,13 +36,14 @@ public class MainActivity extends AppCompatActivity
     PostAdapter postAdapter;
     DatabaseReference postRef;
     FirebaseDatabase database;
+    SearchView mSearchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        
+
 
         database = FirebaseDatabase.getInstance();
         GetItem();
@@ -64,7 +67,6 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
     }
 
     @Override
@@ -80,7 +82,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.menu_search, menu);
         return true;
     }
 
@@ -92,10 +94,9 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if (id == R.id.search_view) {
+            SearchItem();
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -139,7 +140,6 @@ public class MainActivity extends AppCompatActivity
                 PostAdapter postAdapter = new PostAdapter(MainActivity.this,R.layout.post_item,PostArr);
                 lvPost.setAdapter(postAdapter);
                 postAdapter.notifyDataSetChanged();
-
             }
 
             @Override
@@ -170,5 +170,64 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+    }
+
+    private void SearchItem(){
+        PostArr.clear();
+        mSearchView.setQueryHint("Nhập từ khóa...");
+        mSearchView.onActionViewExpanded();
+        mSearchView.setIconified(false);
+        mSearchView.clearFocus();
+
+        postRef=database.getReference();
+        postRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(final DataSnapshot dataSnapshot, String s) {
+                mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        postRef.child("Posts").orderByChild("postTitle").equalTo(newText).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                PostConstruct post = dataSnapshot.getChildren().iterator().next().getValue(PostConstruct.class);
+                                PostArr.add(post);
+                            }
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+                        return false;
+                    }
+                });
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
     }
 }
